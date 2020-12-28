@@ -418,13 +418,12 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             
             //Debug.Log("My Rect : " + ((RectTransform) transform).rect.ToString());
 
-            _contentContainer.anchorMin = new Vector2(0, 0);
-            _contentContainer.anchorMax = new Vector2(1, 1);
-            _contentContainer.pivot = new Vector2(0, 1);
-
             _contentContainer.anchorMin = new Vector2(0, 1);
             _contentContainer.anchorMax = new Vector2(0, 1);
-
+            _contentContainer.pivot = new Vector2(0, 1);
+            var current = ((RectTransform) transform).rect;
+            _contentContainer.sizeDelta = new Vector2(current.width,current.height);
+            
             _itemWidth = _contentContainer.sizeDelta.x;
             _maxXPos = _itemWidth * _contentContainer.childCount;
 

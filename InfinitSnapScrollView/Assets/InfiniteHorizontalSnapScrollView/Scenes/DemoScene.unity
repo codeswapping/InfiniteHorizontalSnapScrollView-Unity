@@ -194,6 +194,7 @@ GameObject:
   - component: {fileID: 349614847}
   - component: {fileID: 349614849}
   - component: {fileID: 349614846}
+  - component: {fileID: 349614850}
   m_Layer: 5
   m_Name: InfiniteSnapScrollView
   m_TagString: Untagged
@@ -217,8 +218,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 438.36, y: -273.72}
-  m_SizeDelta: {x: 876, y: 548}
+  m_AnchoredPosition: {x: 240, y: -167.5}
+  m_SizeDelta: {x: 479.3, y: 335.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &349614846
 MonoBehaviour:
@@ -236,7 +237,7 @@ MonoBehaviour:
   animationTime: 0.5
   snapLimit: 1
   scrollSensitivity: 5
-  isAutoScroll: 0
+  isAutoScroll: 1
   autoScrollDelay: 2
   enableScrolling: 0
   scrollSpeed: 20
@@ -322,6 +323,18 @@ MonoBehaviour:
       m_TypeName: UnityEngine.EventSystems.EventTrigger+TriggerEvent, UnityEngine.UI,
         Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   delegates: []
+--- !u!114 &349614850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 349614844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1200242548, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 1
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
