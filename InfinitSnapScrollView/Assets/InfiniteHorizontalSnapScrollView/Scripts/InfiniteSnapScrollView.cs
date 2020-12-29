@@ -3,9 +3,11 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace InfiniteHorizontalSnapScrollView.Scripts
 {
+    [RequireComponent(typeof(Mask))]
     public class InfiniteSnapScrollView : MonoBehaviour
     {
         #region PUBLIC_VERIABLES
@@ -49,10 +51,8 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         #endregion
 
-        #region PRIVATE_METHODS
-
+        #region PRIVATE_VARIABLES
         private RectTransform _contentContainer;
-
         private bool _isScrollable;
         private Vector2 _initPos, _startPos, _endPos;
         private float _startTime, _endTime;
@@ -404,26 +404,32 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         #endregion
 
-        #region Editor Methods
-        private void OnUpdateLayout()
+        #region EDITOR_METHODS
+        public void OnUpdateLayout()
         {
-            if (_contentContainer == null)
+            //Debug.Log("Called Now : ");
+            if (transform.childCount == 0)
             {
-                _contentContainer = (RectTransform) transform.GetChild(0);
+                var c = new GameObject("Content", typeof(RectTransform));
+                c.transform.SetParent(transform);
+                c.transform.localScale = new Vector3(1,1,1);
+                c.transform.localRotation = Quaternion.identity;
+                _contentContainer = c.transform as RectTransform;
             }
             if (_contentContainer == null)
             {
-                return;
+                _contentContainer =  transform.GetChild(0) as RectTransform;
             }
             
             //Debug.Log("My Rect : " + ((RectTransform) transform).rect.ToString());
 
+            if (ReferenceEquals(_contentContainer, null)) return;
             _contentContainer.anchorMin = new Vector2(0, 1);
             _contentContainer.anchorMax = new Vector2(0, 1);
             _contentContainer.pivot = new Vector2(0, 1);
             var current = ((RectTransform) transform).rect;
-            _contentContainer.sizeDelta = new Vector2(current.width,current.height);
-            
+            _contentContainer.sizeDelta = new Vector2(current.width, current.height);
+
             _itemWidth = _contentContainer.sizeDelta.x;
             _maxXPos = _itemWidth * _contentContainer.childCount;
 
@@ -437,7 +443,6 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                 item.localPosition = new Vector3(_itemWidth * i, 0);
             }
         }
-
         #endregion
 
         #region OTHERS
