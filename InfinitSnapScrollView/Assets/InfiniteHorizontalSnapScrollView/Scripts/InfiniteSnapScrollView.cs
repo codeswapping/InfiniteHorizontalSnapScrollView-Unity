@@ -424,6 +424,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             //Debug.Log("My Rect : " + ((RectTransform) transform).rect.ToString());
 
             if (ReferenceEquals(_contentContainer, null)) return;
+            _contentContainer.localPosition = Vector3.zero;
             _contentContainer.anchorMin = new Vector2(0, 1);
             _contentContainer.anchorMax = new Vector2(0, 1);
             _contentContainer.pivot = new Vector2(0, 1);
