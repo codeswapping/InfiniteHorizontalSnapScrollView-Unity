@@ -62,3 +62,7 @@ InfinitSnapScrollView/.idea
 InfinitSnapScrollView/Temp
 InfinitSnapScrollView/Assets/Plugins/Editor/JetBrains
 JetBrains.meta
+InfinitSnapScrollView/Library/PackageCache
+InfinitSnapScrollView/Library/Artifacts
+ArtifactDB
+ArtifactDB-lock
