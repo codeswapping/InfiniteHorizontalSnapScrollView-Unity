@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -8,6 +9,7 @@ using UnityEngine.UI;
 namespace InfiniteHorizontalSnapScrollView.Scripts
 {
     [RequireComponent(typeof(Mask))]
+    [RequireComponent(typeof(Image))]
     public class InfiniteSnapScrollView : MonoBehaviour
     {
         #region PUBLIC_VERIABLES
@@ -47,18 +49,35 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         [FormerlySerializedAs("_scrollSpeed")] public float scrollSpeed = 20f;
         [FormerlySerializedAs("_stopSpeed")] public float stopSpeed = 10f;
 
-        [Space(20)]
+        public bool SetScrolling
+        {
+            get { return _isScrollable; }
+            set { _isScrollable = value;
+                if (value)
+                {
+                    _isAutoScrollStopTemp = false;
+                }
+                else
+                {
+                    _isAutoScrollStopTemp = true;
+                    StopAutoScroll();
+                    StopAllCoroutines();
+                }
+            }
+        }
 
         #endregion
 
         #region PRIVATE_VARIABLES
         private RectTransform _contentContainer;
         private bool _isScrollable;
+        private bool _isScrollableDefault;
         private Vector2 _initPos, _startPos, _endPos;
         private float _startTime, _endTime;
         private float _itemWidth;
         private float _maxXPos;
         private bool _isAutoScrollRunning;
+        private bool _isAutoScrollStopTemp;
         private int _currentIndex;
         private bool _isMouseScrolling;
         private Transform _closeOne;
@@ -67,27 +86,40 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         #region UNITY_METHODS
 
-        private void Start()
+        private void OnEnable()
         {
             OnUpdateLayout();
             if (_contentContainer == null || _contentContainer.childCount <= 1) return;
-            _isScrollable = true;
-            if (isAutoScroll)
-            {
-                if (_isAutoScrollRunning) return;
-                StartAutoScroll();
-            }
-            else
-            {
-                if (!_isAutoScrollRunning) return;
-                StopAutoScroll();
-            }
+            _isScrollableDefault = true;
+        }
+
+        private void OnDisable()
+        {
+            StopAllCoroutines();
+            StopAutoScroll();
         }
 
         private void Update()
         {
             CheckTouchInput();
             CheckMouseInput();
+            if (isAutoScroll && _contentContainer.childCount > 1)
+            {
+                if (_autoScrollEnableTime <= 0)
+                {
+                    if (_isAutoScrollRunning) return;
+                    StartAutoScroll();
+                }
+                else
+                {
+                    _autoScrollEnableTime -= Time.deltaTime;
+                }
+            }
+            else
+            {
+                if (!_isAutoScrollRunning) return;
+                StopAutoScroll();
+            }
         }
 
         #endregion
@@ -99,14 +131,14 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         /// </summary>
         private void CheckMouseInput()
         {
-            if (!_isScrollable || !_isMouseScrolling) return;
+            if (!_isScrollableDefault || !_isMouseScrolling) return;
             if (isAutoScroll)
             {
                 _autoScrollEnableTime = 5f;
                 if (_isAutoScrollRunning)
                 {
                     StopAutoScroll();
-                    StartCoroutine("EnableAutoScroll");
+                    //StartCoroutine("EnableAutoScroll");
                 }
             }
             var d = SwipeDirection.Left;
@@ -121,7 +153,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         /// </summary>
         private void CheckTouchInput()
         {
-            if (!_isScrollable) return;
+            if (!_isScrollableDefault) return;
             if (Input.touches.Length <= 0) return;
             var touch = Input.GetTouch(0);
             switch (touch.phase)
@@ -140,7 +172,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                         if (_isAutoScrollRunning)
                         {
                             StopAutoScroll();
-                            StartCoroutine("EnableAutoScroll");
+                            //StartCoroutine("EnableAutoScroll");
                         }
                     }
                     _startPos = touch.deltaPosition;
@@ -244,6 +276,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         /// </summary>
         private void StartAutoScroll()
         {
+            if(!_isScrollableDefault) return;
             InvokeRepeating("ScrollToNext", autoScrollDelay, autoScrollDelay);
             _isAutoScrollRunning = true;
         }
@@ -253,8 +286,12 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         /// </summary>
         private void StopAutoScroll()
         {
-            _isAutoScrollRunning = false;
-            CancelInvoke("ScrollToNext");
+            if (_isAutoScrollRunning)
+            {
+                _isAutoScrollRunning = false;
+                _isAutoScrollStopTemp = true;
+                CancelInvoke("ScrollToNext");
+            }
         }
         private SnapData CalculateDistance()
         {
@@ -273,6 +310,50 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         #endregion
 
         #region PUBLIC_METHODS
+
+        public void RemoveAllChild()
+        {
+            if(_isScrollable) return;
+            StopAllCoroutines();
+            if (_contentContainer == null)
+            {
+                _contentContainer = transform.GetChild(0).transform as RectTransform;
+            }
+            if(_contentContainer.childCount == 0) return;
+            foreach (Transform trans in _contentContainer)
+            {
+                Destroy(trans.gameObject);
+            }
+        }
+        
+        public void AddChildren(List<GameObject> items)
+        {
+            if(_isScrollable) return;
+            if(items.Count == 0) return;
+            StopAllCoroutines();
+            if (_contentContainer == null)
+            {
+                _contentContainer = transform.GetChild(0) as RectTransform;
+            }
+            StartCoroutine("AddChildrenNextFrame", items);
+        }
+
+        public void AddItem(GameObject g)
+        {
+            if(_isScrollable) return;
+            if (_contentContainer == null)
+            {
+                _contentContainer = transform.GetChild(0).transform as RectTransform;
+            }
+            var item = ((RectTransform) g.transform);
+            item.SetParent(_contentContainer);
+            item.anchorMin = new Vector2(0, 1);
+            item.anchorMax = new Vector2(0, 1);
+            item.sizeDelta = new Vector2(_itemWidth, _contentContainer.sizeDelta.y);
+            item.pivot = new Vector2(0, 1);
+            item.localPosition = new Vector3(_itemWidth * _contentContainer.childCount, 0);
+            item.localScale = Vector3.one;
+        }
 
         public void OnPointerDown(BaseEventData data)
         {
@@ -334,6 +415,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         private IEnumerator ScrollContent(SwipeData data)
         {
+            if (!gameObject.activeSelf) yield break; 
             var distance = float.MaxValue;
             while (distance > snapLimit)
             {
@@ -348,6 +430,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         private IEnumerator SnapAnimation(SnapData data)
         {
+            if(!gameObject.activeSelf) yield break;
             float t = 0;
             while (t < animationTime)
             {
@@ -391,15 +474,16 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                 _contentContainer.GetChild(i).localPosition = new Vector3(_itemWidth * (i - 1), 0);
             }
         }
-        
-        private IEnumerator EnableAutoScroll()
+
+        private IEnumerator AddChildrenNextFrame(List<GameObject> items)
         {
-            while (_autoScrollEnableTime > 0)
+            yield return 0;
+            foreach (var g in items)
             {
-                _autoScrollEnableTime -= Time.deltaTime;
-                yield return 0;
+                g.transform.SetParent(_contentContainer);
             }
-            StartAutoScroll();
+            _isScrollableDefault = true;
+            OnUpdateLayout();
         }
 
         #endregion
@@ -428,6 +512,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             _contentContainer.anchorMin = new Vector2(0, 1);
             _contentContainer.anchorMax = new Vector2(0, 1);
             _contentContainer.pivot = new Vector2(0, 1);
+            _contentContainer.anchoredPosition = new Vector2(0,0);
             var current = ((RectTransform) transform).rect;
             _contentContainer.sizeDelta = new Vector2(current.width, current.height);
 
@@ -442,6 +527,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                 item.sizeDelta = new Vector2(_itemWidth, _contentContainer.sizeDelta.y);
                 item.pivot = new Vector2(0, 1);
                 item.localPosition = new Vector3(_itemWidth * i, 0);
+                item.localScale = Vector3.one;
             }
         }
         #endregion
