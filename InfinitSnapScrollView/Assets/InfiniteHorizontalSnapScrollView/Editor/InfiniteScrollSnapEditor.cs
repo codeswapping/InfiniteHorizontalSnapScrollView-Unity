@@ -17,7 +17,7 @@ namespace InfiniteHorizontalSnapScrollView.Editor
         private void OnSceneGUI()
         {
             if(Application.isPlaying) return;
-            Debug.Log("Called from SceneGUI"); 
+            //Debug.Log("Called from SceneGUI"); 
             if(_target == null) _target = (InfiniteSnapScrollView) target;
             _target.OnUpdateLayout();
          }

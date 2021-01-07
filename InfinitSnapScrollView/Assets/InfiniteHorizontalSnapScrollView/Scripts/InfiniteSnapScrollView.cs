@@ -76,6 +76,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         private float _startTime, _endTime;
         private float _itemWidth;
         private float _maxXPos;
+        private float _swipeSpeed = 0.1f;
         private bool _isAutoScrollRunning;
         private bool _isAutoScrollStopTemp;
         private int _currentIndex;
@@ -144,7 +145,9 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             var d = SwipeDirection.Left;
             if (_startPos.x < Input.mousePosition.x)
                 d = SwipeDirection.Right;
-            ScrollAndSnap(Vector2.Distance(Input.mousePosition, _startPos), d);
+            var distance = 0.1f;
+            distance = Vector2.Distance(Input.mousePosition, _startPos) * _swipeSpeed * Time.deltaTime / 2f;
+            if(enableScrolling) ScrollAndSnap(distance, d);
             _startPos = Input.mousePosition;
         }
 
@@ -155,6 +158,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         {
             if (!_isScrollableDefault) return;
             if (Input.touches.Length <= 0) return;
+            if(!_isMouseScrolling) return;
             var touch = Input.GetTouch(0);
             switch (touch.phase)
             {
@@ -178,16 +182,25 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                     _startPos = touch.deltaPosition;
                     _endPos = touch.position;
                     _endTime = Time.time;
-                    var distance = Vector2.Distance(_startPos, _endPos);
+                    var distance = 0.1f;
+                    distance = Vector2.Distance(_startPos, _endPos) * _swipeSpeed * Time.deltaTime / 2f;
+                    //Debug.Log("Distance : " + distance);
                     var d = SwipeDirection.Left;
                     if (_startPos.x < _endPos.x) d = SwipeDirection.Right;
-                    ScrollAndSnap(distance, d);
+                    if(enableScrolling) ScrollAndSnap(distance, d);
                     break;
                 }
                 case TouchPhase.Ended:
                     _endPos = touch.position;
                     _endTime = Time.time;
-                    if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
+                    if (enableScrolling)
+                    {
+                        if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
+                    }
+                    else
+                    {
+                        if(CheckSwipe()) ScrollToNext();
+                    }
                     break;
                 case TouchPhase.Stationary:
                     break;
@@ -357,6 +370,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         public void OnPointerDown(BaseEventData data)
         {
+            Debug.Log("OnPointerDown");
             _initPos = _startPos = Input.mousePosition;
             _startTime = Time.time;
             _isMouseScrolling = true;
@@ -366,10 +380,18 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
         public void OnPointerUp(BaseEventData data)
         {
+            Debug.Log("OnPointerUp");
             _isMouseScrolling = false;
             _endPos = Input.mousePosition;
             _endTime = Time.time;
-            if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
+            if (enableScrolling)
+            {
+                if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
+            }
+            else
+            {
+                if(CheckSwipe()) ScrollToNext();
+            }
 
             /*var x = _closeOne.localPosition.x;
             var isAdd = false;
@@ -492,6 +514,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         public void OnUpdateLayout()
         {
             //Debug.Log("Called Now : ");
+            _currentIndex = 0;
             if (transform.childCount == 0)
             {
                 var c = new GameObject("Content", typeof(RectTransform));
@@ -519,6 +542,9 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             _itemWidth = _contentContainer.sizeDelta.x;
             _maxXPos = _itemWidth * _contentContainer.childCount;
 
+            _swipeSpeed =  _itemWidth / Screen.width;
+            //Debug.Log("Swipe Speed : " + _swipeSpeed);
+
             for (var i = 0; i < _contentContainer.childCount; i++)
             {
                 var item = ((RectTransform) _contentContainer.GetChild(i).transform);
@@ -529,6 +555,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
                 item.localPosition = new Vector3(_itemWidth * i, 0);
                 item.localScale = Vector3.one;
             }
+            _closeOne = _contentContainer.GetChild(0);
         }
         #endregion
 
