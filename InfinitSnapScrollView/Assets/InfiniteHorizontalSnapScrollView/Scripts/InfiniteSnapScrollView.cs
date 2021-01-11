@@ -10,7 +10,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 {
     [RequireComponent(typeof(Mask))]
     [RequireComponent(typeof(Image))]
-    public class InfiniteSnapScrollView : MonoBehaviour
+    public class InfiniteSnapScrollView : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
     {
         #region PUBLIC_VERIABLES
 
@@ -83,6 +83,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         private bool _isMouseScrolling;
         private Transform _closeOne;
         private float _autoScrollEnableTime;
+        private bool _isScrolling = false;
         #endregion
 
         #region UNITY_METHODS
@@ -225,11 +226,12 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             var timeTaken = _endTime - _startTime;
             var d = _endPos.x < _initPos.x ? SwipeDirection.Left : SwipeDirection.Right;
             if (!(distance >= distanceThreshHold) || !(timeTaken <= timeThreshHold)) return false;
+            if (!enableScrolling) return true;
             var data = new SwipeData
             {
                 Velocity = new Vector2(distance * timeTaken * scrollSensitivity, 0), Direction = d
             };
-            if (!enableScrolling) return false;
+            //if (!enableScrolling) return false;
             StartCoroutine("ScrollContent", data);
             return true;
         }
@@ -368,59 +370,6 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             item.localScale = Vector3.one;
         }
 
-        public void OnPointerDown(BaseEventData data)
-        {
-            Debug.Log("OnPointerDown");
-            _initPos = _startPos = Input.mousePosition;
-            _startTime = Time.time;
-            _isMouseScrolling = true;
-            StopCoroutine("SnapAnimation");
-            StopCoroutine("ScrollContent");
-        }
-
-        public void OnPointerUp(BaseEventData data)
-        {
-            Debug.Log("OnPointerUp");
-            _isMouseScrolling = false;
-            _endPos = Input.mousePosition;
-            _endTime = Time.time;
-            if (enableScrolling)
-            {
-                if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
-            }
-            else
-            {
-                if(CheckSwipe()) ScrollToNext();
-            }
-
-            /*var x = _closeOne.localPosition.x;
-            var isAdd = false;
-            if (x < 0)
-            {
-                x = Mathf.Abs(x);
-                isAdd = true;
-            }
-            
-            for (int i = 0; i < _contentContainer.childCount; i++)
-            {
-                var item = _contentContainer.GetChild(i);
-                Vector2 pos = item.localPosition;
-                pos = isAdd ? new Vector3(pos.x + x, pos.y) : new Vector3(pos.x - x, pos.y);
-    
-                if (item.localPosition.x <= -_itemWidth)
-                {
-                    pos = new Vector3(_maxXPos - _itemWidth,
-                        pos.y);
-                }
-                else if (item.localPosition.x > _maxXPos - _itemWidth)
-                {
-                    pos = new Vector3(-_itemWidth, pos.y);
-                }
-    
-                item.localPosition = pos;
-            }*/
-        }
-
         public void ScrollToNext()
         {
             if (_currentIndex + 1 < _contentContainer.childCount)
@@ -430,7 +379,37 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
 
             StartCoroutine("SnapAnimation", new SnapData {Distance = _itemWidth, Direction = false});
         }
-        
+        public void OnDrag(PointerEventData eventData)
+        {
+            Debug.Log("OnDrag");
+        }
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            Debug.Log("OnBeginDrag");
+            _initPos = _startPos = Input.mousePosition;
+            Debug.Log("Init Pos : " + _initPos);
+            _startTime = Time.time;
+            _isMouseScrolling = true;
+            StopCoroutine("SnapAnimation");
+            StopCoroutine("ScrollContent");
+        }
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            Debug.Log("OnEndDrag");
+            _endPos = Input.mousePosition;
+            Debug.Log("End Pos : " + _endPos);
+            _endTime = Time.time;
+            _isMouseScrolling = false;
+            if (enableScrolling)
+            {
+                if (CheckSwipe() == false) StartCoroutine("SnapAnimation", CalculateDistance());
+            }
+            else
+            {
+                if(CheckSwipe()) ScrollToNext();
+            }
+        }
+
         #endregion
 
         #region CO-ROUTINES
@@ -581,5 +560,8 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
         }
 
         #endregion
+
+
+       
     }
 }
