@@ -545,6 +545,7 @@ namespace InfiniteHorizontalSnapScrollView.Scripts
             _swipeSpeed =  _itemWidth / Screen.width;
             //Debug.Log("Swipe Speed : " + _swipeSpeed);
 
+            if (_contentContainer.childCount <= 0) return;
             for (var i = 0; i < _contentContainer.childCount; i++)
             {
                 var item = ((RectTransform) _contentContainer.GetChild(i).transform);
